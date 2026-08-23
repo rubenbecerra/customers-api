@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
@@ -110,9 +111,15 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .retrieve()
                 .toBodilessEntity();
 
-        String rawToken = loginResponse.getHeaders().getFirst("authorization");
-        if (rawToken == null) {
-            rawToken = loginResponse.getHeaders().getFirst("Authorization");
+        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) {
+            authHeader = loginResponse.getHeaders().getFirst("authorization");
+        }
+        String tokenHeaderValue;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            tokenHeaderValue = authHeader;
+        } else {
+            tokenHeaderValue = "Bearer " + authHeader;
         }
         restClient.post()
                 .uri("/api/v1/customers")
@@ -124,7 +131,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         List<CustomerDTO> customers = restClient.get()
                 .uri("api/v1/customers")
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<CustomerDTO>>() {
@@ -173,9 +180,16 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve()
                 .toBodilessEntity();
-        String rawToken = loginResponse.getHeaders().getFirst("authorization");
-        if (rawToken == null) {
-            rawToken = loginResponse.getHeaders().getFirst("Authorization");
+        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) {
+            authHeader = loginResponse.getHeaders().getFirst("authorization");
+        }
+
+        String tokenHeaderValue;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            tokenHeaderValue = authHeader;
+        } else {
+            tokenHeaderValue = "Bearer " + authHeader;
         }
 
         restClient.post()
@@ -186,7 +200,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         List<CustomerDTO> allCustomers = restClient.get()
                 .uri("api/v1/customers")
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().body(new ParameterizedTypeReference<List<CustomerDTO>>() {
                 });
@@ -198,7 +212,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .findFirst().orElseThrow();
         CustomerDTO customer = restClient.get()
                 .uri("api/v1/customers/{id}",id)
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().body(CustomerDTO.class);
         assertThat(customer).isNotNull();
@@ -247,9 +261,15 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve().toBodilessEntity();
 
-        String rawToken = loginResponse.getHeaders().getFirst("authorization");
-        if (rawToken == null) {
-            rawToken = loginResponse.getHeaders().getFirst("Authorization");
+        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) {
+            authHeader = loginResponse.getHeaders().getFirst("authorization");
+        }
+        String tokenHeaderValue;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            tokenHeaderValue = authHeader;
+        } else {
+            tokenHeaderValue = "Bearer " + authHeader;
         }
 
         restClient.post()
@@ -260,7 +280,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         List<CustomerDTO> allCustomers = restClient.get()
                 .uri("api/v1/customers")
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().body(new ParameterizedTypeReference<List<CustomerDTO>>() {
                 });
@@ -271,16 +291,15 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         ResponseEntity<Void> deleteResponse = restClient.delete()
                 .uri("api/v1/customers/{id}",id)
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().toBodilessEntity();
 
-        final String jwtToken = rawToken;
         assertThat(deleteResponse.getStatusCode().value()).isEqualTo(200);
         assertThat(customerRepository.existsById(id)).isFalse();
         assertThatThrownBy(() -> restClient.get()
                 .uri("/api/v1/customers/{id}",id)
-                .header("Authorization", "Bearer " + jwtToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .retrieve().body(CustomerDTO.class)
         ).isInstanceOf(HttpClientErrorException.NotFound.class);
 
@@ -314,11 +333,20 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve().toBodilessEntity();
 
-        final String rawToken = loginResponse.getHeaders().getFirst("Authorization");
+        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) {
+            authHeader = loginResponse.getHeaders().getFirst("authorization");
+        }
+        String tokenHeaderValue;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            tokenHeaderValue = authHeader;
+        } else {
+            tokenHeaderValue = "Bearer " + authHeader;
+        }
 
         List<CustomerDTO> allCustomers = restClient.get()
                 .uri("api/v1/customers")
-                .header("Authorization", "Bearer " + rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<CustomerDTO>>() {
@@ -336,7 +364,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         );
         ResponseEntity<Void> updateResponse = restClient.put()
                 .uri("api/v1/customers/{id}",id)
-                .header("Authorization", "Bearer "+ rawToken)
+                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(updateRequest)
                 .retrieve().toBodilessEntity();
