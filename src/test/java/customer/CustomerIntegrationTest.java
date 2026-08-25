@@ -5,6 +5,7 @@ import com.example.customers.auth.AuthenticationRequest;
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
 import com.example.customers.entity.Customer;
+import com.example.customers.entity.Role;
 import com.example.customers.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,10 +17,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +41,8 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
     private CustomerRepository customerRepository;
 
     private RestClient restClient;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -76,13 +81,17 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         String email1 = "user1-" + UUID.randomUUID() + "@gmail.com";
         String email2 = "user2-" + UUID.randomUUID() + "@gmail.com";
 
-        CustomerRegistrationRequest request1 =  new CustomerRegistrationRequest(
-                "user1",
+
+        Customer admin = new Customer(
+                "admin",
                 email1,
                 25,
                 "MALE",
-                "123"
+                passwordEncoder.encode("123"),
+                Role.ROLE_ADMIN
         );
+        customerRepository.save(admin);
+
 
         CustomerRegistrationRequest request2 = new CustomerRegistrationRequest(
                 "user2",
@@ -91,12 +100,6 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 "MALE",
                 "1234"
         );
-        restClient.post()
-                .uri("/api/v1/customers")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request1)
-                .retrieve()
-                .toBodilessEntity();
 
         AuthenticationRequest authReq = new AuthenticationRequest(
                 email1,
@@ -105,6 +108,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         ResponseEntity<Void> loginResponse = restClient.post()
                 .uri("/api/v1/auth/login")
+                .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(authReq)
                 .retrieve()
@@ -141,8 +145,8 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .containsExactlyInAnyOrder(email1,email2);
     }
     @Test
-    @DisplayName("Should retrieve a customer with the specified id")
-    void shouldGetCustomerById() {
+    @DisplayName("Should retrieve the authenticated customer")
+    void shouldGetAuthenticatedCustomer() {
         String email1 = "user1-" + UUID.randomUUID() + "@gmail.com";
         String email2 = "user2-" + UUID.randomUUID() + "@gmail.com";
 
@@ -197,25 +201,12 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(request2)
                 .retrieve().toBodilessEntity();
 
-        List<CustomerDTO> allCustomers = restClient.get()
-                .uri("api/v1/customers")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve().body(new ParameterizedTypeReference<List<CustomerDTO>>() {
-                });
-
-        assert allCustomers != null;
-
-        int id = allCustomers.stream().filter(c -> c.email().equals(email1))
-                .map(CustomerDTO::id)
-                .findFirst().orElseThrow();
         CustomerDTO customer = restClient.get()
-                .uri("api/v1/customers/{id}",id)
+                .uri("api/v1/customers/me")
                 .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().body(CustomerDTO.class);
         assertThat(customer).isNotNull();
-        assertThat(customer.id()).isEqualTo(id);
         assertThat(customer.name()).isEqualTo("user1");
         assertThat(customer.email()).isEqualTo(email1);
         assertThat(customer.age()).isEqualTo(25);
@@ -223,8 +214,8 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
     }
     @Test
-    @DisplayName("Should delete an user with the specified id")
-    void shouldDeleteUserById() {
+    @DisplayName("Should delete the authenticated user")
+    void shouldDeleteAuthenticatedUser() {
         String email1 = "user1-" + UUID.randomUUID() + "@gmail.com";
         String email2 = "user2-" + UUID.randomUUID() + "@gmail.com";
 
@@ -277,27 +268,17 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(request2)
                 .retrieve().toBodilessEntity();
 
-        List<CustomerDTO> allCustomers = restClient.get()
-                .uri("api/v1/customers")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve().body(new ParameterizedTypeReference<List<CustomerDTO>>() {
-                });
-
-        assert allCustomers != null;
-        int id = allCustomers.stream().filter(c -> c.email().equals(email1))
-                .map(CustomerDTO::id).findFirst().orElseThrow();
 
         ResponseEntity<Void> deleteResponse = restClient.delete()
-                .uri("api/v1/customers/{id}",id)
+                .uri("api/v1/customers/me")
                 .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().toBodilessEntity();
 
         assertThat(deleteResponse.getStatusCode().value()).isEqualTo(200);
-        assertThat(customerRepository.existsById(id)).isFalse();
+        assertThat(customerRepository.existsCustomerByEmail(email1)).isFalse();
         assertThatThrownBy(() -> restClient.get()
-                .uri("/api/v1/customers/{id}",id)
+                .uri("/api/v1/customers/me")
                 .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .retrieve().body(CustomerDTO.class)
         ).isInstanceOf(HttpClientErrorException.NotFound.class);
@@ -343,16 +324,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
             tokenHeaderValue = "Bearer " + authHeader;
         }
 
-        List<CustomerDTO> allCustomers = restClient.get()
-                .uri("api/v1/customers")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<CustomerDTO>>() {
-                });
-        assert allCustomers != null;
-        int id = allCustomers.stream().filter(c->c.email().equals(originalEmail))
-                .map(CustomerDTO::id).findFirst().orElseThrow();
+
         String updatedEmail = "user1-" + UUID.randomUUID() + "@gmail.com";
         CustomerRegistrationRequest updateRequest = new CustomerRegistrationRequest(
                 "Alex",
@@ -362,7 +334,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 "1234"
         );
         ResponseEntity<Void> updateResponse = restClient.put()
-                .uri("api/v1/customers/{id}",id)
+                .uri("api/v1/customers/me")
                 .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(updateRequest)
@@ -370,7 +342,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         assertThat(updateResponse.getStatusCode().value()).isEqualTo(200);
 
-        Customer updatedInDb = customerRepository.findById(id).orElseThrow();
+        Customer updatedInDb = customerRepository.findByEmail(updatedEmail).orElseThrow();
         assertThat(updatedInDb.getName()).isEqualTo("Alex");
         assertThat(updatedInDb.getEmail()).isEqualTo(updatedEmail);
         assertThat(updatedInDb.getAge()).isEqualTo(32);
