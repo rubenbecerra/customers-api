@@ -2,6 +2,7 @@ package customer;
 
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.entity.Customer;
+import com.example.customers.entity.Role;
 import com.example.customers.mapper.CustomerDTOMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,8 @@ public class CustomerDTOMapperTest {
                 "alex@gmail.com",
                 25,
                 "Male",
-                "123"
+                "123",
+                Role.ROLE_USER
         );
         // Create the customer DTO
         CustomerDTO actual = underTest.apply(customer);

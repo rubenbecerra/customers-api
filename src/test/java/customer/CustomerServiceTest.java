@@ -3,6 +3,7 @@ package customer;
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
 import com.example.customers.entity.Customer;
+import com.example.customers.entity.Role;
 import com.example.customers.mapper.CustomerDTOMapper;
 import com.example.customers.repository.CustomerRepository;
 import com.example.customers.service.CustomerService;
@@ -45,7 +46,7 @@ public class CustomerServiceTest {
     @Test
     void canGetCustomerDTOById() {
         int id = 10;
-        Customer customer = new Customer("alex", "alex@gmail.com", 25, "Male","123");
+        Customer customer = new Customer("alex", "alex@gmail.com", 25, "Male","123", Role.ROLE_USER);
         CustomerDTO customerDTO = new CustomerDTO(id, "alex", "alex@gmail.com", 25, "Male");
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(customer));
@@ -76,7 +77,7 @@ public class CustomerServiceTest {
     @Test
     void canUpdateACustomer() {
         int id = 10;
-        Customer customer = new Customer("alex","alex@gmail.com", 25,"Male","123");
+        Customer customer = new Customer("alex","alex@gmail.com", 25,"Male","123",Role.ROLE_USER);
         CustomerRegistrationRequest update = new CustomerRegistrationRequest("alexandre","alexandre@gmail.com", 22, "Male","123");
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(customer));
@@ -97,7 +98,7 @@ public class CustomerServiceTest {
     @Test
     void willThrowWhenUpdateHasNoChanges() {
         int id = 10;
-        Customer customer = new Customer("alex","alex@gmail.com",20,"Male","123");
+        Customer customer = new Customer("alex","alex@gmail.com",20,"Male","123",Role.ROLE_USER);
         when(customerRepository.findById(id)).thenReturn(Optional.of(customer));
 
         CustomerRegistrationRequest update = new CustomerRegistrationRequest(
@@ -129,7 +130,7 @@ public class CustomerServiceTest {
     @Test
     void canDeleteCustomer() {
         int id = 10;
-        Customer customer = new Customer("alex","alex@gmail.com",20,"Male","123");
+        Customer customer = new Customer("alex","alex@gmail.com",20,"Male","123",Role.ROLE_USER);
 
         when(customerRepository.existsById(id)).thenReturn(true);
         underTest.deleteCustomer(id);

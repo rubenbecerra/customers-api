@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -31,7 +32,12 @@ public class CustomerService {
     public List<CustomerDTO> getAllCustomersDTO() {
         return customerRepository.findAll().stream().map(customerDTOMapper).toList();
     }
-    @Cacheable(value = "customer", key = "#id")
+    @Cacheable(value = "customer_by_email", key = "#email")
+    public CustomerDTO getCustomerDTOByEmail(String email) {
+        return customerRepository.findByEmail(email).map(customerDTOMapper)
+                .orElseThrow(() -> new NoSuchElementException("Client with email [%s] not found".formatted(email)));
+    }
+
     public CustomerDTO getCustomerDTOById(Integer id) {
         return customerRepository.findById(id).map(customerDTOMapper)
                 .orElseThrow(() -> new NoSuchElementException("Client with ID " + id + " not found"));
@@ -43,9 +49,13 @@ public class CustomerService {
         return customerRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Customer with ID " + id + " not found"));
     }
+    public Customer getCustomerByEmail(String email) {
+        return customerRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Client with email " + email + " not found"));
+    }
     @Caching(evict = {
             @CacheEvict(value = "customers", allEntries = true),
-            @CacheEvict(value = "customer", allEntries = true)
+            @CacheEvict(value = "customer_by_email", allEntries = true)
     })
     public void addCustomer(CustomerRegistrationRequest request) {
 
@@ -62,9 +72,10 @@ public class CustomerService {
 
         customerRepository.save(customer);
     }
+
     @Caching(evict = {
             @CacheEvict(value = "customers", allEntries = true),
-            @CacheEvict(value = "customer", allEntries = true)
+            @CacheEvict(value = "customer_by_email", key = "#email")
     })
     public void deleteCustomer(Integer id) {
         boolean exists = customerRepository.existsById(id);
@@ -73,12 +84,56 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
+
     @Caching(evict = {
             @CacheEvict(value = "customers", allEntries = true),
-            @CacheEvict(value = "customer", allEntries = true)
+            @CacheEvict(value = "customer_by_email", key = "#email")
+    })
+    public void deleteCustomerByEmail(String email) {
+        Customer customer = customerRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Client with email " + email + " doesn't exist"));
+        customerRepository.delete(customer);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "customers", allEntries = true),
+            @CacheEvict(value = "customer_by_email", key = "#email")
     })
     public void updateCustomer(Integer id, CustomerRegistrationRequest request) {
         Customer customer = getCustomerById(id);
+        boolean changes = false;
+        if (request.name() != null && !request.name().isEmpty() && !request.name().equals(customer.getName())) {
+            customer.setName(request.name());
+            changes = true;
+        }
+        if (request.email() != null && !request.email().isEmpty() && !request.email().equals(customer.getEmail())) {
+            if (customerRepository.existsCustomerByEmail(request.email())) {
+                throw new DataIntegrityViolationException("email already taken");
+            }
+            customer.setEmail(request.email());
+            changes = true;
+        }
+        if (request.age() != null && !request.age().equals(customer.getAge())) {
+            customer.setAge(request.age());
+            changes = true;
+        }
+        if (request.gender() != null && !request.gender().isEmpty() && !request.gender().equals(customer.getGender())) {
+            customer.setGender(request.gender());
+            changes = true;
+        }
+        if (!changes) {
+            throw new IllegalArgumentException("No data changes found");
+        }
+
+        customerRepository.save(customer);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "customers", allEntries = true),
+            @CacheEvict(value = "customer_by_email", key = "#email")
+    })
+    public void updateCustomerByEmail(String email, CustomerRegistrationRequest request) {
+        Customer customer = getCustomerByEmail(email);
         boolean changes = false;
         if (request.name() != null && !request.name().isEmpty() && !request.name().equals(customer.getName())) {
             customer.setName(request.name());

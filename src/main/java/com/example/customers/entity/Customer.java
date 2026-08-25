@@ -1,9 +1,6 @@
 package com.example.customers.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,20 +19,32 @@ public class Customer implements UserDetails {
     private Integer age;
     private String gender;
     private String password;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
+    public Customer(String name, String email, Integer age, String gender, String password, Role role) {
+        this.name = name;
+        this.email = email;
+        this.age = age;
+        this.gender = gender;
+        this.password = password;
+        this.role = role;
+    }
     public Customer(String name, String email, Integer age, String gender, String password) {
         this.name = name;
         this.email = email;
         this.age = age;
         this.gender = gender;
         this.password = password;
+        this.role = Role.ROLE_USER;
     }
 
     public Customer() {
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
     @Override
     public String getPassword() {
@@ -98,6 +107,12 @@ public class Customer implements UserDetails {
     }
     public void setGender(String gender) {
         this.gender = gender;
+    }
+    public Role getRole() {
+        return this.role;
+    }
+    public void setRole(Role role) {
+        this.role = role;
     }
 
 
