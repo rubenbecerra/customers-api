@@ -15,6 +15,7 @@ public class Customer implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String name;
+    @Column(nullable = false, unique = true, updatable = false)
     private String email;
     private Integer age;
     private String gender;
@@ -89,10 +90,6 @@ public class Customer implements UserDetails {
 
     public String getEmail() {
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public Integer getAge() {

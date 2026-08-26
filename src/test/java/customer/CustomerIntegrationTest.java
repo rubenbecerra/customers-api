@@ -4,6 +4,7 @@ import com.example.customers.Main;
 import com.example.customers.auth.AuthenticationRequest;
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
+import com.example.customers.dto.CustomerUpdateRequest;
 import com.example.customers.entity.Customer;
 import com.example.customers.entity.Role;
 import com.example.customers.repository.CustomerRepository;
@@ -22,7 +23,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -286,12 +286,13 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
     }
     @Test
     @DisplayName("Should update the user's mail")
-    void shouldUpdateEmail() {
-        String originalEmail = "user1-" + UUID.randomUUID() + "@gmail.com";
+    void shouldUpdateName() {
+        String originalNAme = "user1";
+        String email = "user1@gmail.com";
 
         CustomerRegistrationRequest request = new CustomerRegistrationRequest(
                 "user1",
-                originalEmail,
+                email,
                 24,
                 "MALE",
                 "123"
@@ -304,7 +305,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .toBodilessEntity();
 
         AuthenticationRequest authReq = new AuthenticationRequest(
-                originalEmail,
+                email,
                 "123"
         );
         ResponseEntity<Void> loginResponse = restClient.post()
@@ -325,13 +326,12 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         }
 
 
-        String updatedEmail = "user1-" + UUID.randomUUID() + "@gmail.com";
-        CustomerRegistrationRequest updateRequest = new CustomerRegistrationRequest(
-                "Alex",
-                updatedEmail,
+        String updatedName = "user";
+        CustomerUpdateRequest updateRequest = new CustomerUpdateRequest(
+                updatedName,
                 32,
-                "MALE",
-                "1234"
+                "MALE"
+
         );
         ResponseEntity<Void> updateResponse = restClient.put()
                 .uri("api/v1/customers/me")
@@ -342,9 +342,9 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         assertThat(updateResponse.getStatusCode().value()).isEqualTo(200);
 
-        Customer updatedInDb = customerRepository.findByEmail(updatedEmail).orElseThrow();
-        assertThat(updatedInDb.getName()).isEqualTo("Alex");
-        assertThat(updatedInDb.getEmail()).isEqualTo(updatedEmail);
+        Customer updatedInDb = customerRepository.findByEmail(email).orElseThrow();
+        assertThat(updatedInDb.getName()).isEqualTo(updatedName);
+        assertThat(updatedInDb.getEmail()).isEqualTo(email);
         assertThat(updatedInDb.getAge()).isEqualTo(32);
     }
 }

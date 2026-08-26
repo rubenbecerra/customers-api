@@ -2,6 +2,7 @@ package com.example.customers.controller;
 
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
+import com.example.customers.dto.CustomerUpdateRequest;
 import com.example.customers.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,13 +61,13 @@ public class CustomerController {
     @PutMapping("{id}")
     public void updateCustomer(
             @PathVariable("id") Integer id,
-            @RequestBody CustomerRegistrationRequest request) {
+            @RequestBody CustomerUpdateRequest request) {
         customerService.updateCustomer(id, request);
     }
 
     @PutMapping("me")
     public void updateAuthenticatedCustomer(Authentication authentication,
-                                            @RequestBody CustomerRegistrationRequest request) {
+                                            @RequestBody CustomerUpdateRequest request) {
         String email = authentication.getName();
         customerService.updateCustomerByEmail(email, request);
     }

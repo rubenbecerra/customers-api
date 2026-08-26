@@ -2,6 +2,7 @@ package customer;
 
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
+import com.example.customers.dto.CustomerUpdateRequest;
 import com.example.customers.entity.Customer;
 import com.example.customers.entity.Role;
 import com.example.customers.mapper.CustomerDTOMapper;
@@ -78,10 +79,9 @@ public class CustomerServiceTest {
     void canUpdateACustomer() {
         int id = 10;
         Customer customer = new Customer("alex","alex@gmail.com", 25,"Male","123",Role.ROLE_USER);
-        CustomerRegistrationRequest update = new CustomerRegistrationRequest("alexandre","alexandre@gmail.com", 22, "Male","123");
+        CustomerUpdateRequest update = new CustomerUpdateRequest("alexandre", 22, "Male");
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(customer));
-        when(customerRepository.existsCustomerByEmail(update.email())).thenReturn(false);
 
         underTest.updateCustomer(id,update);
 
@@ -91,7 +91,6 @@ public class CustomerServiceTest {
         Customer capturedCustomer = customerArgumentCaptor.getValue();
 
         assertThat(capturedCustomer.getName()).isEqualTo(update.name());
-        assertThat(capturedCustomer.getEmail()).isEqualTo(update.email());
         assertThat(capturedCustomer.getAge()).isEqualTo(update.age());
         assertThat(capturedCustomer.getGender()).isEqualTo(update.gender());
     }
@@ -101,8 +100,8 @@ public class CustomerServiceTest {
         Customer customer = new Customer("alex","alex@gmail.com",20,"Male","123",Role.ROLE_USER);
         when(customerRepository.findById(id)).thenReturn(Optional.of(customer));
 
-        CustomerRegistrationRequest update = new CustomerRegistrationRequest(
-                "alex","alex@gmail.com",20,"Male","123");
+        CustomerUpdateRequest update = new CustomerUpdateRequest(
+                "alex",20,"Male");
         assertThatThrownBy(() -> underTest.updateCustomer(id, update)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No data changes found");
 

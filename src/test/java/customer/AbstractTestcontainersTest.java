@@ -14,15 +14,15 @@ import org.testcontainers.utility.DockerImageName;
 public abstract class AbstractTestcontainersTest {
 
     @Container
-    protected static final PostgreSQLContainer<?> postgreSQLContainer =
-            new PostgreSQLContainer<>("postgres:16-alpine")
+    protected static final PostgreSQLContainer postgreSQLContainer =
+            new PostgreSQLContainer("postgres:16-alpine")
                     .withDatabaseName("customers_test_db")
                     .withUsername("admin")
                     .withPassword("password123");
 
     @Container
-    protected static final GenericContainer<?> redisContainer =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
+    protected static final GenericContainer redisContainer =
+            new GenericContainer(DockerImageName.parse("redis:7-alpine"))
                     .withExposedPorts(6379);
 
     @DynamicPropertySource

@@ -2,6 +2,7 @@ package com.example.customers.service;
 
 import com.example.customers.dto.CustomerDTO;
 import com.example.customers.dto.CustomerRegistrationRequest;
+import com.example.customers.dto.CustomerUpdateRequest;
 import com.example.customers.entity.Customer;
 import com.example.customers.mapper.CustomerDTOMapper;
 import com.example.customers.repository.CustomerRepository;
@@ -11,6 +12,8 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -99,20 +102,14 @@ public class CustomerService {
             @CacheEvict(value = "customers", allEntries = true),
             @CacheEvict(value = "customer_by_email", key = "#email")
     })
-    public void updateCustomer(Integer id, CustomerRegistrationRequest request) {
+    public void updateCustomer(Integer id, CustomerUpdateRequest request) {
         Customer customer = getCustomerById(id);
         boolean changes = false;
         if (request.name() != null && !request.name().isEmpty() && !request.name().equals(customer.getName())) {
             customer.setName(request.name());
             changes = true;
         }
-        if (request.email() != null && !request.email().isEmpty() && !request.email().equals(customer.getEmail())) {
-            if (customerRepository.existsCustomerByEmail(request.email())) {
-                throw new DataIntegrityViolationException("email already taken");
-            }
-            customer.setEmail(request.email());
-            changes = true;
-        }
+
         if (request.age() != null && !request.age().equals(customer.getAge())) {
             customer.setAge(request.age());
             changes = true;
@@ -132,20 +129,15 @@ public class CustomerService {
             @CacheEvict(value = "customers", allEntries = true),
             @CacheEvict(value = "customer_by_email", key = "#email")
     })
-    public void updateCustomerByEmail(String email, CustomerRegistrationRequest request) {
+    @Transactional
+    public void updateCustomerByEmail(String email, CustomerUpdateRequest request) {
         Customer customer = getCustomerByEmail(email);
         boolean changes = false;
         if (request.name() != null && !request.name().isEmpty() && !request.name().equals(customer.getName())) {
             customer.setName(request.name());
             changes = true;
         }
-        if (request.email() != null && !request.email().isEmpty() && !request.email().equals(customer.getEmail())) {
-            if (customerRepository.existsCustomerByEmail(request.email())) {
-                throw new DataIntegrityViolationException("email already taken");
-            }
-            customer.setEmail(request.email());
-            changes = true;
-        }
+
         if (request.age() != null && !request.age().equals(customer.getAge())) {
             customer.setAge(request.age());
             changes = true;
