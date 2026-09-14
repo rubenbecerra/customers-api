@@ -1,0 +1,64 @@
+package com.example.customers.customers.application.usecase;
+
+import com.example.customers.customers.domain.model.Customer;
+import com.example.customers.customers.domain.repository.CustomerRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.NoSuchElementException;
+
+@Service
+public class UpdateCustomerUseCase {
+
+    private final CustomerRepository customerRepository;
+
+    public UpdateCustomerUseCase(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "customers", allEntries = true),
+            @CacheEvict(value = "customer_by_email", allEntries = true)
+    })
+    public void update(Integer id, String name, Integer age, String gender) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Customer with ID " + id + " not found"));
+
+        applyChanges(customer, name, age, gender);
+        customerRepository.save(customer);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "customers", allEntries = true),
+            @CacheEvict(value = "customer_by_email", key = "#email")
+    })
+    @Transactional
+    public void updateByEmail(String email, String name, Integer age, String gender) {
+        Customer customer = customerRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Client with email " + email + " not found"));
+
+        applyChanges(customer, name, age, gender);
+        customerRepository.save(customer);
+    }
+
+    private void applyChanges(Customer customer, String name, Integer age, String gender) {
+        boolean changes = false;
+        if (name != null && !name.isEmpty() && !name.equals(customer.getName())) {
+            customer.setName(name);
+            changes = true;
+        }
+        if (age != null && !age.equals(customer.getAge())) {
+            customer.setAge(age);
+            changes = true;
+        }
+        if (gender != null && !gender.isEmpty() && !gender.equals(customer.getGender())) {
+            customer.setGender(gender);
+            changes = true;
+        }
+        if (!changes) {
+            throw new IllegalArgumentException("No data changes found");
+        }
+    }
+}

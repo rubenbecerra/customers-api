@@ -1,9 +1,9 @@
 package customer;
 
-import com.example.customers.dto.CustomerDTO;
-import com.example.customers.entity.Customer;
-import com.example.customers.entity.Role;
-import com.example.customers.mapper.CustomerDTOMapper;
+import com.example.customers.customers.infrastructure.rest.CustomerDTO;
+import com.example.customers.customers.domain.model.Customer;
+import com.example.customers.customers.domain.model.Role;
+import com.example.customers.customers.infrastructure.rest.CustomerDTOMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

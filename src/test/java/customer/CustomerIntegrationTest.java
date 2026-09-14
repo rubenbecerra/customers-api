@@ -1,13 +1,13 @@
 package customer;
 
 import com.example.customers.Main;
-import com.example.customers.auth.AuthenticationRequest;
-import com.example.customers.dto.CustomerDTO;
-import com.example.customers.dto.CustomerRegistrationRequest;
-import com.example.customers.dto.CustomerUpdateRequest;
-import com.example.customers.entity.Customer;
-import com.example.customers.entity.Role;
-import com.example.customers.repository.CustomerRepository;
+import com.example.customers.auth.infrastructure.rest.AuthenticationRequest;
+import com.example.customers.customers.infrastructure.rest.CustomerDTO;
+import com.example.customers.customers.infrastructure.rest.CustomerRegistrationRequest;
+import com.example.customers.customers.infrastructure.rest.CustomerUpdateRequest;
+import com.example.customers.customers.domain.model.Customer;
+import com.example.customers.customers.domain.model.Role;
+import com.example.customers.customers.domain.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -278,7 +278,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         assertThat(deleteResponse.getStatusCode().value()).isEqualTo(200);
         assertThat(customerRepository.existsCustomerByEmail(email1)).isFalse();
         assertThatThrownBy(() -> restClient.get()
-                .uri("/api/v1/customers/me")
+                .uri("api/v1/customers/me")
                 .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
                 .retrieve().body(CustomerDTO.class)
         ).isInstanceOf(HttpClientErrorException.NotFound.class);
