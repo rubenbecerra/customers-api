@@ -2,15 +2,10 @@ package com.example.customers.customers.application.usecase;
 
 import com.example.customers.customers.domain.model.Customer;
 import com.example.customers.customers.domain.repository.CustomerRepository;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
-@Service
-public class UpdateCustomerUseCase {
+public class UpdateCustomerUseCase implements  UpdateCustomerPort{
 
     private final CustomerRepository customerRepository;
 
@@ -18,10 +13,7 @@ public class UpdateCustomerUseCase {
         this.customerRepository = customerRepository;
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "customers", allEntries = true),
-            @CacheEvict(value = "customer_by_email", allEntries = true)
-    })
+    @Override
     public void update(Integer id, String name, Integer age, String gender) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Customer with ID " + id + " not found"));
@@ -30,11 +22,8 @@ public class UpdateCustomerUseCase {
         customerRepository.save(customer);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "customers", allEntries = true),
-            @CacheEvict(value = "customer_by_email", key = "#email")
-    })
-    @Transactional
+
+    @Override
     public void updateByEmail(String email, String name, Integer age, String gender) {
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchElementException("Client with email " + email + " not found"));
