@@ -6,7 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)
 ![Redis](https://img.shields.io/badge/Redis-7-red?logo=redis)
 ![Docker](https://img.shields.io/badge/Docker-GHCR-2496ED?logo=docker)
-![JaCoCo](https://img.shields.io/badge/Coverage-75%25%2B-green)
+![JaCoCo](https://img.shields.io/badge/Coverage-80%25%2B-green)
 
 A production-grade RESTful API built with **Spring Boot 4** and **Java 21**. This project serves as an enterprise architectural foundation implementing stateless **JWT Authentication**, high-performance caching via **Redis**, robust database migrations with **Flyway**, automated integration testing with **Testcontainers**, and a strict **CI/CD pipeline** targeting GitHub Container Registry (GHCR).
 
@@ -17,7 +17,7 @@ A production-grade RESTful API built with **Spring Boot 4** and **Java 21**. Thi
 The goal of this project is to implement an enterprise-standard backend architecture ready for production workloads:
 * **Stateless Security Model:** Complete authentication flow using signed JSON Web Tokens (JWT) with BCrypt encryption.
 * **Resilient Testing Strategy:** Elimination of in-memory mocks (H2) in favor of real, isolated runtime dependencies (**Testcontainers** for PostgreSQL and Redis).
-* **Quality Gates:** Strict code coverage validation enforced via **JaCoCo** ($\ge 75\%$) preventing failing builds from reaching production.
+* **Quality Gates:** Strict code coverage validation enforced via **JaCoCo** ($\ge 80\%$) preventing failing builds from reaching production.
 * **Automated Delivery (DevOps):** End-to-end continuous integration and deployment pipeline that builds, tests, verifies coverage, and publishes production-ready multi-stage Docker images to **GHCR**.
 * **Observability:** Health checks, liveness/readiness probes, and telemetry endpoints via **Spring Boot Actuator**.
 
