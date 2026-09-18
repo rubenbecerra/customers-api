@@ -21,13 +21,17 @@ public class JWTUtil {
     private SecretKey getSigninKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
+
     public String issueToken(String subject) {
-        return issueToken(subject, Map.of());
+        return issueToken(subject, Map.of(), 15, ChronoUnit.MINUTES);
     }
     public String issueToken(String subject, Map<String, Object> claims) {
+        return issueToken(subject, claims, 15, ChronoUnit.MINUTES);
+    }
+    public String issueToken(String subject, Map<String, Object> claims, long duration, ChronoUnit unit) {
         return Jwts.builder().claims(claims).subject(subject)
                 .issuer("customer-api").issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plus(15, ChronoUnit.DAYS)))
+                .expiration(Date.from(Instant.now().plus(duration, unit)))
                 .signWith(getSigninKey()).compact();
     }
     private Claims getClaims(String token) {

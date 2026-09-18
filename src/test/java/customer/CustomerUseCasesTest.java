@@ -22,7 +22,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CustomerUseCasesTest {
+public class CustomerUseCasesTest
+{
 
     @Mock
     private CustomerRepository customerRepository;

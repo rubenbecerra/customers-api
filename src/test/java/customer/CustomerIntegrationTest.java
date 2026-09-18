@@ -2,6 +2,8 @@ package customer;
 
 import com.example.customers.Main;
 import com.example.customers.auth.infrastructure.rest.AuthenticationRequest;
+import com.example.customers.auth.infrastructure.rest.AuthenticationResponse;
+import com.example.customers.auth.infrastructure.rest.RefreshTokenRequest;
 import com.example.customers.customers.infrastructure.rest.CustomerDTO;
 import com.example.customers.customers.infrastructure.rest.CustomerRegistrationRequest;
 import com.example.customers.customers.infrastructure.rest.CustomerUpdateRequest;
@@ -346,5 +348,64 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         assertThat(updatedInDb.getName()).isEqualTo(updatedName);
         assertThat(updatedInDb.getEmail()).isEqualTo(email);
         assertThat(updatedInDb.getAge()).isEqualTo(32);
+    }
+    @Test
+    @DisplayName("Should login successfully and refresh tokens using Redis")
+    void shouldLoginAndRefreshTokenSuccessfully() throws InterruptedException {
+        String email = "auth-" + UUID.randomUUID() + "@example.com";
+        String password = "Password123!";
+
+        CustomerRegistrationRequest registerRequest = new CustomerRegistrationRequest(
+                "AuthUser",
+                email,
+                30,
+                "MALE",
+                password
+        );
+
+        restClient.post()
+                .uri("/api/v1/customers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(registerRequest)
+                .retrieve()
+                .toBodilessEntity();
+
+        AuthenticationRequest authReq = new AuthenticationRequest(email, password);
+
+        ResponseEntity<AuthenticationResponse> loginResponse = restClient.post()
+                .uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(authReq)
+                .retrieve()
+                .toEntity(AuthenticationResponse.class);
+
+        assertThat(loginResponse.getStatusCode().value()).isEqualTo(200);
+        AuthenticationResponse authBody = loginResponse.getBody();
+        assertThat(authBody).isNotNull();
+        assertThat(authBody.accessToken()).isNotBlank();
+        assertThat(authBody.refreshToken()).isNotBlank();
+
+
+        Thread.sleep(1000);
+
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest(authBody.refreshToken());
+
+        ResponseEntity<AuthenticationResponse> refreshResponse = restClient.post()
+                .uri("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(refreshRequest)
+                .retrieve()
+                .toEntity(AuthenticationResponse.class);
+
+        assertThat(refreshResponse.getStatusCode().value()).isEqualTo(200);
+        AuthenticationResponse refreshBody = refreshResponse.getBody();
+        assertThat(refreshBody).isNotNull();
+        assertThat(refreshBody.accessToken()).isNotBlank();
+        assertThat(refreshBody.refreshToken()).isNotBlank();
+
+        assertThat(refreshBody.accessToken()).isNotEqualTo(authBody.accessToken());
+        assertThat(refreshBody.refreshToken()).isNotEqualTo(authBody.refreshToken());
     }
 }
