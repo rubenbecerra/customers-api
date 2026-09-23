@@ -10,14 +10,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
-@Service
+
 public class AuthenticationUseCase {
 
     private final AuthenticationManager authenticationManager;
@@ -85,5 +84,8 @@ public class AuthenticationUseCase {
         String firstRole = roles.isEmpty() ? "" : roles.getFirst();
 
         return new AuthenticationResponse(newAccessToken, newRefreshToken, username, firstRole);
+    }
+    public void logout(String username) {
+        redisTokenRepository.delete(username);
     }
 }

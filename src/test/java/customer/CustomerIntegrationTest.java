@@ -116,16 +116,8 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .retrieve()
                 .toBodilessEntity();
 
-        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
-        if (authHeader == null) {
-            authHeader = loginResponse.getHeaders().getFirst("authorization");
-        }
-        String tokenHeaderValue;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            tokenHeaderValue = authHeader;
-        } else {
-            tokenHeaderValue = "Bearer " + authHeader;
-        }
+        String cookieHeader = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
         restClient.post()
                 .uri("/api/v1/customers")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -136,7 +128,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         List<CustomerDTO> customers = restClient.get()
                 .uri("api/v1/customers")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
+                .header(HttpHeaders.COOKIE, cookieHeader)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<CustomerDTO>>() {
@@ -185,17 +177,8 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve()
                 .toBodilessEntity();
-        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
-        if (authHeader == null) {
-            authHeader = loginResponse.getHeaders().getFirst("authorization");
-        }
 
-        String tokenHeaderValue;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            tokenHeaderValue = authHeader;
-        } else {
-            tokenHeaderValue = "Bearer " + authHeader;
-        }
+        String cookieHeader = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         restClient.post()
                 .uri("api/v1/customers")
@@ -203,9 +186,10 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(request2)
                 .retrieve().toBodilessEntity();
 
+
         CustomerDTO customer = restClient.get()
                 .uri("api/v1/customers/me")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
+                .header(HttpHeaders.COOKIE, cookieHeader)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().body(CustomerDTO.class);
         assertThat(customer).isNotNull();
@@ -253,16 +237,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve().toBodilessEntity();
 
-        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
-        if (authHeader == null) {
-            authHeader = loginResponse.getHeaders().getFirst("authorization");
-        }
-        String tokenHeaderValue;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            tokenHeaderValue = authHeader;
-        } else {
-            tokenHeaderValue = "Bearer " + authHeader;
-        }
+        String cookieHeader = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         restClient.post()
                 .uri("api/v1/customers")
@@ -273,7 +248,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
 
         ResponseEntity<Void> deleteResponse = restClient.delete()
                 .uri("api/v1/customers/me")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
+                .header(HttpHeaders.COOKIE, cookieHeader)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().toBodilessEntity();
 
@@ -281,7 +256,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         assertThat(customerRepository.existsCustomerByEmail(email1)).isFalse();
         assertThatThrownBy(() -> restClient.get()
                 .uri("api/v1/customers/me")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
+                .header(HttpHeaders.COOKIE, cookieHeader)
                 .retrieve().body(CustomerDTO.class)
         ).isInstanceOf(HttpClientErrorException.NotFound.class);
 
@@ -316,17 +291,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
                 .body(authReq)
                 .retrieve().toBodilessEntity();
 
-        String authHeader = loginResponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.AUTHORIZATION);
-        if (authHeader == null) {
-            authHeader = loginResponse.getHeaders().getFirst("authorization");
-        }
-        String tokenHeaderValue;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            tokenHeaderValue = authHeader;
-        } else {
-            tokenHeaderValue = "Bearer " + authHeader;
-        }
-
+        String cookieHeader = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
 
         String updatedName = "user";
         CustomerUpdateRequest updateRequest = new CustomerUpdateRequest(
@@ -337,7 +302,7 @@ class CustomerIntegrationTest extends AbstractTestcontainersTest {
         );
         ResponseEntity<Void> updateResponse = restClient.put()
                 .uri("api/v1/customers/me")
-                .header(HttpHeaders.AUTHORIZATION, tokenHeaderValue)
+                .header(HttpHeaders.COOKIE, cookieHeader)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(updateRequest)
                 .retrieve().toBodilessEntity();

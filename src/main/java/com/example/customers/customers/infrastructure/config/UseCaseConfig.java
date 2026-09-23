@@ -1,12 +1,17 @@
 package com.example.customers.customers.infrastructure.config;
 
+import com.example.customers.auth.application.AuthenticationUseCase;
+import com.example.customers.auth.infrastructure.security.RedisTokenRepository;
 import com.example.customers.customers.application.usecase.DeleteCustomerUseCase;
 import com.example.customers.customers.application.usecase.GetCustomerUseCase;
 import com.example.customers.customers.application.usecase.RegisterCustomerUseCase;
 import com.example.customers.customers.application.usecase.UpdateCustomerUseCase;
 import com.example.customers.customers.domain.repository.CustomerRepository;
+import com.example.customers.shared.security.JWTUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
@@ -30,5 +35,16 @@ public class UseCaseConfig {
     @Bean
     public UpdateCustomerUseCase updateCustomerUseCase(CustomerRepository customerRepository) {
         return new UpdateCustomerUseCase(customerRepository);
+    }
+
+    @Bean
+    public AuthenticationUseCase authenticationUseCase(AuthenticationManager authenticationManager,
+                                                       JWTUtil jwtUtil,
+                                                       RedisTokenRepository redisTokenRepository,
+                                                       UserDetailsService userDetailsService) {
+        return new AuthenticationUseCase(authenticationManager,
+                 jwtUtil,
+                 redisTokenRepository,
+                 userDetailsService);
     }
 }

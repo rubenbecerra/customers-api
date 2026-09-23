@@ -38,18 +38,27 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-            ) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
+    ) throws ServletException, IOException {
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String jwt = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    jwt = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
-        String jwt = authHeader.substring(7);
+
         String subject = jwtUtil.getSubject(jwt);
 
         if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtUtil.isTokenValid(jwt,subject)) {
+            if (jwtUtil.isTokenValid(jwt, subject)) {
                 List<SimpleGrantedAuthority> authorities = jwtUtil.getRoles(jwt)
                         .stream().map(SimpleGrantedAuthority::new)
                         .toList();
@@ -65,7 +74,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         }
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
     }
 
 }
